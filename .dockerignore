@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+server.log
+server.err.log
+.env
+.git/
+
+# Deploy-only files (not needed inside the backend image)
+docker-compose.yml
+.env.example
+DEPLOY.md
