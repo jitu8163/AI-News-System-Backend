@@ -41,7 +41,7 @@ services:
       start_period: 40s
 
   frontend:
-    build: ../frontend
+    build: ../wohana_news_frontend
     restart: unless-stopped
     depends_on:
       - backend
