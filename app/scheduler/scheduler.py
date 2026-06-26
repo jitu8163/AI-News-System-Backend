@@ -164,20 +164,43 @@ def update_interval(hours: float) -> None:
 
 
 def start_scheduler() -> None:
+    """Start the background news scheduler. Safe to call once on app startup.
+
+    Idempotent (won't double-start) and never raises into the caller, so a
+    scheduler problem is logged loudly but can't crash application boot.
+    """
+    if _scheduler.running:
+        logger.info("scheduler_already_running")
+        return
+
     minutes = int(_current_interval_hours * 60)
-    _scheduler.add_job(
-        collect_and_process,
-        trigger="interval",
-        minutes=minutes,
-        id="news_collect",
-        replace_existing=True,
-        misfire_grace_time=60,
-        # Run once immediately on startup so a fresh deploy captures the whole
-        # day's articles right away, then repeats every interval.
-        next_run_time=datetime.now(_UTC),
-    )
-    _scheduler.start()
-    logger.info("scheduler_started", interval_hours=_current_interval_hours)
+    try:
+        _scheduler.add_job(
+            collect_and_process,
+            trigger="interval",
+            minutes=minutes,
+            id="news_collect",
+            replace_existing=True,
+            # A full sweep (all keywords x all states) can run longer than one
+            # interval. coalesce + max_instances=1 collapse any ticks that pile
+            # up during a long run into a single next run instead of silently
+            # dropping them as misfires; the wide grace window keeps a delayed
+            # run alive rather than skipping it.
+            coalesce=True,
+            max_instances=1,
+            misfire_grace_time=3600,
+            # Run once immediately on startup so a fresh deploy captures the whole
+            # day's articles right away, then repeats every interval.
+            next_run_time=datetime.now(_UTC),
+        )
+        _scheduler.start()
+        logger.info(
+            "scheduler_started",
+            interval_hours=_current_interval_hours,
+            running=_scheduler.running,
+        )
+    except Exception:
+        logger.exception("scheduler_start_failed")
 
 
 def stop_scheduler() -> None:
