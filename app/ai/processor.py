@@ -129,7 +129,7 @@ def _build_prompt(title: str, content: str, keyword_hint: str | None) -> str:
 
     hint = f'\nThe article was matched on the search term "{keyword_hint}".' if keyword_hint else ""
 
-    return f"""You are a One Health news analyst. Extract structured outbreak/disease information from the news item below.{hint}
+    return f"""You are a One Health news analyst covering India. Extract structured outbreak/disease information from the news item below, paying attention to which Indian state or union territory it concerns.{hint}
 
 {summary_instruction}
 
@@ -144,7 +144,7 @@ Extract these fields. Carefully scan the text for cities, regions, governments, 
 - positive_cases: integer number of confirmed/positive cases. Null if not stated.
 - suspected_cases: integer number of suspected/probable cases. Null if not stated.
 - species_affected: affected species, comma-separated (e.g. "Humans, Rodents"). Null if none.
-- country: full English country name the article is primarily about. Null if no geographic reference.
+- country: the Indian state or union territory the article is primarily about (e.g. "Maharashtra", "Kerala", "Delhi"). Use the full official state name. If only a city is mentioned, return the state it belongs to (e.g. Mumbai -> "Maharashtra", Bengaluru -> "Karnataka"). Null if no Indian location is referenced.
 - environmental_factors: contributing environmental conditions, e.g. "Flooding, Waterlogging". Null if none.
 - risk_level: overall public-health risk — exactly one of "High", "Medium", "Low" based on severity, spread, and fatalities.
 - event_date: the date the event/outbreak occurred or was reported, as "YYYY-MM-DD". Null if not determinable.

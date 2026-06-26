@@ -3,11 +3,18 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.collectors.countries import COUNTRIES
 from app.core.database import get_db
 from app.schemas.dashboard import DashboardStats, ImpactStats, CountryCount
 from app.services.dashboard_service import DashboardService
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
+
+
+@router.get("/regions", response_model=list[str])
+async def get_regions() -> list[str]:
+    """Return all selectable Indian states/UTs for filter dropdowns (public)."""
+    return sorted(COUNTRIES.keys())
 
 
 @router.get("/stats", response_model=DashboardStats)

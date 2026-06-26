@@ -1,112 +1,78 @@
-"""Country registry for region-scoped Google News collection.
+"""State registry for India-scoped Google News collection.
 
-Each entry maps a display name to the Google News edition parameters
-(`hl` language, `gl` geo, `ceid` country:lang) used to build an RSS query
-scoped to that country. Every edition requests the English (`:en`) feed so
-summaries stay in English regardless of the country's primary language.
+This platform tracks news across the states and union territories of India.
+Every region uses the Google News **India English edition** (``hl=en-IN``,
+``gl=IN``, ``ceid=IN:en``); the only thing that varies per state is the search
+query, which is scoped by appending the state name (e.g. ``"Dengue Kerala"``).
 
-The special value ``WORLDWIDE`` uses the global English edition with no
-country term appended to the query.
+The special value ``ALL_INDIA`` uses the national India edition with no state
+term appended to the query — i.e. pan-India coverage.
+
+NOTE: For backward compatibility with the rest of the codebase the public
+symbols keep their original names (``COUNTRIES``, ``WORLDWIDE``,
+``edition_params`` …). They now describe Indian states rather than countries,
+and the article ``country`` column holds the state name.
 """
 from __future__ import annotations
 
-WORLDWIDE = "Worldwide"
+# Pan-India option (the former "Worldwide"). Kept as ``WORLDWIDE`` so existing
+# imports continue to work; the displayed/stored value is "All India".
+WORLDWIDE = "All India"
+ALL_INDIA = WORLDWIDE  # readable alias
 
-# name -> ISO country code. All editions are requested in English (en / XX:en).
-# Broad coverage across every continent using Google News country editions
-# that return usable English-language results.
-_COUNTRY_CODES: dict[str, str] = {
-    # North America
-    "United States": "US",
-    "Canada": "CA",
-    "Mexico": "MX",
-    "Cuba": "CU",
-    # South America
-    "Brazil": "BR",
-    "Argentina": "AR",
-    "Colombia": "CO",
-    "Chile": "CL",
-    "Peru": "PE",
-    "Venezuela": "VE",
-    # Europe
-    "United Kingdom": "GB",
-    "Ireland": "IE",
-    "Germany": "DE",
-    "France": "FR",
-    "Italy": "IT",
-    "Spain": "ES",
-    "Portugal": "PT",
-    "Netherlands": "NL",
-    "Belgium": "BE",
-    "Switzerland": "CH",
-    "Austria": "AT",
-    "Sweden": "SE",
-    "Norway": "NO",
-    "Denmark": "DK",
-    "Finland": "FI",
-    "Poland": "PL",
-    "Czechia": "CZ",
-    "Hungary": "HU",
-    "Romania": "RO",
-    "Greece": "GR",
-    "Ukraine": "UA",
-    "Russia": "RU",
-    # Middle East
-    "Turkey": "TR",
-    "Israel": "IL",
-    "United Arab Emirates": "AE",
-    "Saudi Arabia": "SA",
-    "Qatar": "QA",
-    "Kuwait": "KW",
-    "Bahrain": "BH",
-    "Oman": "OM",
-    "Lebanon": "LB",
-    "Jordan": "JO",
-    # Africa
-    "Egypt": "EG",
-    "Morocco": "MA",
-    "Nigeria": "NG",
-    "Kenya": "KE",
-    "Ghana": "GH",
-    "Uganda": "UG",
-    "Tanzania": "TZ",
-    "Ethiopia": "ET",
-    "Zimbabwe": "ZW",
-    "South Africa": "ZA",
-    "Botswana": "BW",
-    "Namibia": "NA",
-    # South Asia
-    "India": "IN",
-    "Pakistan": "PK",
-    "Bangladesh": "BD",
-    "Sri Lanka": "LK",
-    "Nepal": "NP",
-    # South-East & East Asia
-    "Singapore": "SG",
-    "Malaysia": "MY",
-    "Philippines": "PH",
-    "Indonesia": "ID",
-    "Thailand": "TH",
-    "Vietnam": "VN",
-    "Hong Kong": "HK",
-    "Taiwan": "TW",
-    "Japan": "JP",
-    "South Korea": "KR",
-    "China": "CN",
-    # Oceania
-    "Australia": "AU",
-    "New Zealand": "NZ",
-}
+# India English Google News edition shared by every state-scoped query.
+_INDIA_EDITION = ("en-IN", "IN", "IN:en")
 
-# name -> (hl, gl, ceid)
-COUNTRIES: dict[str, tuple[str, str, str]] = {
-    name: (f"en-{code}", code, f"{code}:en") for name, code in _COUNTRY_CODES.items()
-}
+# States & union territories of India. Each maps to the shared India edition;
+# they differ only by the query term appended in the collector.
+_STATES: list[str] = [
+    # States
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+    # Union Territories
+    "Andaman and Nicobar Islands",
+    "Chandigarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Jammu and Kashmir",
+    "Ladakh",
+    "Lakshadweep",
+    "Puducherry",
+]
 
-# Global English edition for the "Worldwide" option.
-_WORLDWIDE_EDITION = ("en-US", "US", "US:en")
+# name -> (hl, gl, ceid). Every state shares the India edition.
+COUNTRIES: dict[str, tuple[str, str, str]] = {name: _INDIA_EDITION for name in _STATES}
 
-# All selectable region values: Worldwide first, then countries alphabetically.
+# Pan-India national edition for the "All India" option.
+_WORLDWIDE_EDITION = _INDIA_EDITION
+
+# All selectable region values: All India first, then states alphabetically.
 AVAILABLE_REGIONS: list[str] = [WORLDWIDE, *sorted(COUNTRIES.keys())]
 
 
@@ -115,14 +81,14 @@ def is_valid_region(name: str) -> bool:
 
 
 def edition_params(country: str | None) -> tuple[str, str, str]:
-    """Return (hl, gl, ceid) for a country, or the global edition for Worldwide/None."""
+    """Return (hl, gl, ceid). Always the India edition (national or state-scoped)."""
     if not country or country == WORLDWIDE:
         return _WORLDWIDE_EDITION
     return COUNTRIES.get(country, _WORLDWIDE_EDITION)
 
 
 def normalize_regions(regions: list[str] | None) -> list[str]:
-    """Keep only valid regions; default to all available countries. Worldwide is exclusive."""
+    """Keep only valid regions; default to all states. 'All India' is exclusive."""
     if not regions:
         return list(COUNTRIES.keys())
     valid = [r for r in regions if is_valid_region(r)]

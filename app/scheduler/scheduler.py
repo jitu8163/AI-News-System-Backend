@@ -20,8 +20,8 @@ logger = get_logger(__name__)
 _scheduler = AsyncIOScheduler()
 
 
-# UTC recency window for global news collection. Articles are considered
-# recent relative to UTC, since the platform now tracks multiple countries.
+# UTC recency window for India-wide news collection. Articles are considered
+# recent relative to UTC, since the platform tracks many Indian states.
 _UTC = timezone.utc
 
 # How many UTC calendar days back count as "recent". 1 == today only,
@@ -128,9 +128,9 @@ async def _save_article(raw, keyword_hint: str | None = None) -> bool:
             article.risk_level = ai["risk_level"]
             article.event_date = ai["event_date"]
             article.ai_summary = ai["ai_summary"]
-            # When we collected for a specific region, that region is authoritative
-            # (the user asked for that country's news). Only fall back to the
-            # AI-detected country for Worldwide collection (raw.country is None).
+            # When we collected for a specific state, that state is authoritative
+            # (the user asked for that state's news). Only fall back to the
+            # AI-detected state for All-India collection (raw.country is None).
             article.country = raw.country or ai.get("country")
             article.ai_processed = True
         except Exception as exc:

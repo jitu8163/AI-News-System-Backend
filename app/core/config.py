@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/wohana_news"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/ainews"  # noqa: S106
 
     # Groq
     GROQ_API_KEY: str = ""
@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # Admin seed
     ADMIN_EMAIL: str = "admin@example.com"
-    ADMIN_PASSWORD: str = "password123"
+    ADMIN_PASSWORD: str = "Admin@123"
 
 
 @lru_cache

@@ -7,6 +7,7 @@ from app.api.router import api_router
 from app.core.config import settings
 from app.core.database import engine
 from app.core.middleware import RequestLoggingMiddleware
+from app.core.seed import seed_admin_if_missing
 from app.scheduler.scheduler import start_scheduler, stop_scheduler
 from app.utils.logging import configure_logging, get_logger
 
@@ -17,7 +18,12 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("startup", app=settings.APP_NAME, version=settings.APP_VERSION)
-    # Admin is seeded via the standalone `seed_admin.py` script, not on startup.
+    # Seed the initial admin on first run. Idempotent: skipped if it exists,
+    # so an existing admin's password is never overwritten on restart/deploy.
+    try:
+        await seed_admin_if_missing()
+    except Exception:
+        logger.exception("admin_seed_failed")
     start_scheduler()
     yield
     stop_scheduler()
